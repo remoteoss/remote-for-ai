@@ -60,14 +60,17 @@ Before creating or approving leave, check feasibility. This is the highest-value
 
 If the balance is insufficient or the policy blocks the request, **report the conflict** and ask how to proceed (reduce days, switch type, talk to the People team) rather than silently failing.
 
-### Building the `timeoff_days` Array
+### Building the `timeoff_days` Parameter
 
-`create_employee_timeoff_request` and `create_timeoff` expect a `timeoff_days` array describing the leave day-by-day. To build it correctly:
+`create_employee_timeoff_request` and `create_timeoff` expect a `timeoff_days` parameter describing the leave day-by-day. To build it correctly:
 
 1. Call `get_work_calendar` for the requested `start_date` → `end_date`.
-2. For each date in the range, include it in `timeoff_days` **only if it is a working day** (skip weekends and holidays).
+2. For each date in the range, include it **only if it is a working day** (skip weekends and holidays).
 3. For each included day, set `hours` to `work_hours_per_day` minus any hours the calendar shows are already booked that day.
-4. Each entry has the shape `{ "day": "YYYY-MM-DD", "hours": <integer> }`.
+4. Pass it as a **zero-based integer-keyed object** — not a JSON array. Passing a plain array causes the MCP layer to serialize it as a string and the API will reject it:
+   ```json
+   { "0": { "day": "YYYY-MM-DD", "hours": 8 }, "1": { "day": "YYYY-MM-DD", "hours": 8 } }
+   ```
 
 Skipping this calendar lookup is the single most common cause of failed bookings.
 
@@ -125,10 +128,12 @@ For list questions ("who's out next week?"), prefer one row per request with `na
 
 ## Quick Reference
 
-**Self-service (employee):** `get_current_user`, `list_employee_timeoffs`, `get_timeoff_leave_policies_summary`, `get_work_calendar`, `create_employee_timeoff_request`, `cancel_employee_timeoff_request`, `request_cancel_employee_timeoff`
+**Self-service (employee):** `get_current_user`, `list_employee_timeoffs`, `get_timeoff_leave_policies_summary`, `get_work_calendar`, `create_employee_timeoff_request`
+
+> Note: `cancel_employee_timeoff_request` and `request_cancel_employee_timeoff` are not currently exposed via MCP. Direct the user to cancel via the Remote platform UI.
 
 **Manager / admin:** `list_team_members`, `list_company_employments`, `list_timeoffs`, `get_timeoff_stats`, `approve_timeoff`, `decline_timeoff`, `get_timeoff_dashboard`, `get_timeoff_team_absence_timeline`, `list_employee_timeoff_leave_policies_summary`, `create_timeoff`, `list_timeoff_leave_policies`
 
 **Holidays:** `list_company_public_holidays`, `create_company_public_holiday`, `approve_draft_holidays`
 
-**Common pitfalls:** building `timeoff_days` without calling `get_work_calendar` first • requesting a leave type the employment's policy does not support • approving a request that has already been cancelled • forgetting that `request_cancel_employee_timeoff` produces a `cancel_requested` state that itself still needs approval • calling `list_company_employments` and looping when `list_timeoffs` with `direct_reports_only: true` returns the same data in one call • answering policy questions ("how does carryover work?") from general knowledge instead of the data returned by `get_timeoff_leave_policies_summary`.
+**Common pitfalls:** passing `timeoff_days` as a JSON array instead of a zero-based integer-keyed object (causes "Invalid array. Got: string" rejection) • building `timeoff_days` without calling `get_work_calendar` first • requesting a leave type the employment's policy does not support • approving a request that has already been cancelled • forgetting that `request_cancel_employee_timeoff` produces a `cancel_requested` state that itself still needs approval • calling `list_company_employments` and looping when `list_timeoffs` with `direct_reports_only: true` returns the same data in one call • answering policy questions ("how does carryover work?") from general knowledge instead of the data returned by `get_timeoff_leave_policies_summary`.

@@ -40,19 +40,18 @@ Every `SKILL.md` starts with YAML frontmatter:
 name: your-skill-name
 description: <one sentence describing the skill, including the trigger phrases the user is likely to say>
 license: MIT
-allowed-tools: mcp__remote__list_employments, mcp__remote__show_employment
 ---
 ```
 
 Notes:
 
 - `description` is what every AI client reads to decide *whether* to load the skill. Include obvious trigger phrases ("when the user mentions X").
-- `allowed-tools` is required for **Cursor** and harmless elsewhere — keep it on every skill, listing the MCP tools the skill is allowed to call. The format is `mcp__<server-name>__<tool-name>`; for this plugin, `<server-name>` is always `remote`.
-- For full Claude-specific options (`disable-model-invocation`, `category`, `parent`, etc.), see the [Agent Skills spec](https://code.claude.com/docs/en/skills).
+- We deliberately do **not** set `allowed-tools` on these skills. It's optional in Claude Code (where it pre-approves tools so the user isn't prompted) and unrecognised by Cursor, Codex, and Gemini CLI. Since this plugin's writes (`approve_*`, `decline_*`, `cancel_*`, `create_*`) are exactly the calls a user should consciously approve, we leave the prompts in place.
+- For full Claude-specific frontmatter options (`disable-model-invocation`, `category`, `parent`, etc.), see the [Agent Skills spec](https://code.claude.com/docs/en/skills).
 
 ### 3. Structure the body
 
-The two example skills (`remote-time-off-workflow`, `remote-employment-lookup`) follow a consistent structure that we recommend reusing:
+The two example skills (`remote-time-off-workflow`, `remote-payroll-and-payslips`) follow a consistent structure that we recommend reusing:
 
 1. **Invoke This Skill When** — bullet list of trigger conditions.
 2. **Prerequisites** — what the user/environment must have set up.

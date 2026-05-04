@@ -20,8 +20,6 @@ commands/          # Slash commands (currently empty)
 assets/            # Logo and other brand assets
 ```
 
-Skills use YAML frontmatter with `allowed-tools` — required by Cursor, harmless in Claude Code, Codex, and Gemini. Keep it in every skill file.
-
 ## MCP Server
 
 Remote MCP server uses **HTTP transport with OAuth 2.0**. The endpoint is configured in [`.mcp.json`](.mcp.json) and mirrored at [`mcp.json`](mcp.json). Two MCP config files exist:
@@ -51,7 +49,6 @@ Each skill lives in `skills/<name>/SKILL.md`. The frontmatter `description` fiel
    name: skill-name
    description: <one sentence; include trigger phrases>
    license: MIT
-   allowed-tools: mcp__remote__<tool_a>, mcp__remote__<tool_b>
    ---
    ```
 2. Body should cover: when to invoke, prerequisites, security/PII guardrails, the workflow phases, and a quick reference.

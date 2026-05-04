@@ -7,16 +7,9 @@
       "command": "npx",
       "args": [
         "mcp-remote@latest",
-        "${REMOTE_MCP_URL:-https://mcp.remote.com/mcp}"
+        "https://mcp.remote.com/mcp"
       ]
     }
   },
-  "contextFileName": "GEMINI.md",
-  "settings": [
-    {
-      "name": "Remote MCP URL",
-      "description": "Remote MCP endpoint URL (default: https://mcp.remote.com/mcp). Override only if Remote directs you to a different endpoint.",
-      "envVar": "REMOTE_MCP_URL"
-    }
-  ]
+  "contextFileName": "GEMINI.md"
 }

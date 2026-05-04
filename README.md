@@ -49,7 +49,7 @@ Then run `/plugins` from inside Codex, select **Remote**, and install.
 gemini extensions install https://github.com/remoteoss/remote-for-ai
 ```
 
-This bridges the HTTP MCP endpoint via `npx mcp-remote@latest` (Gemini CLI requires stdio transport). Override the endpoint with the `REMOTE_MCP_URL` environment variable if needed.
+This bridges the HTTP MCP endpoint via `npx mcp-remote@latest`, since Gemini CLI currently only supports stdio MCP servers.
 
 ### From Source (any client)
 

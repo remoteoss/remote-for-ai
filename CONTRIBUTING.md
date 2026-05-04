@@ -84,10 +84,6 @@ Whenever you ship a meaningful change, bump the `version` field in **all four** 
 
 This ensures users actually receive the update — see the [Claude plugin version management docs](https://code.claude.com/docs/en/plugins-reference#version-management).
 
-### 6. Update `AGENTS.md`
-
-Add a row to the Skills table in [AGENTS.md](AGENTS.md) so the skill is discoverable by anyone reading the agent instructions.
-
 ## Style
 
 - **No emojis** in skill content — keep output platform-neutral and copy-paste-safe across clients and terminals.

@@ -33,12 +33,7 @@ For Gemini CLI (which currently only supports stdio MCP), [`gemini-extension.jso
 
 ## Skills
 
-| Skill                           | Description                                                                                              |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `remote-time-off-workflow`      | Submit, approve, decline, or cancel time-off requests; consult leave balances and public holidays.       |
-| `remote-payroll-and-payslips`   | View payslips, salary history, and payslip breakdowns for the logged-in employee or a managed teammate.  |
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new skills.
+Each skill lives in `skills/<name>/SKILL.md`. The frontmatter `description` field is the source of truth for what the skill does and when it should activate — browse the directory or `rg "^description:" skills/` to enumerate. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add a new skill.
 
 ## Key Conventions
 

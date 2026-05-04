@@ -7,7 +7,7 @@
       "command": "npx",
       "args": [
         "mcp-remote@latest",
-        "${REMOTE_MCP_URL:-https://api.employ.remote.com/mcp}"
+        "${REMOTE_MCP_URL:-https://mcp.remote.com/mcp}"
       ]
     }
   },
@@ -15,7 +15,7 @@
   "settings": [
     {
       "name": "Remote MCP URL",
-      "description": "Remote MCP endpoint URL (default: https://api.employ.remote.com/mcp). Override only if Remote directs you to a different endpoint.",
+      "description": "Remote MCP endpoint URL (default: https://mcp.remote.com/mcp). Override only if Remote directs you to a different endpoint.",
       "envVar": "REMOTE_MCP_URL"
     }
   ]

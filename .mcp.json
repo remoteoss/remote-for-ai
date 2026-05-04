@@ -2,7 +2,7 @@
   "mcpServers": {
     "remote": {
       "type": "http",
-      "url": "https://developer.remote.com/mcp"
+      "url": "https://api.employ.remote.com/mcp"
     }
   }
 }

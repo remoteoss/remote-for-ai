@@ -33,10 +33,10 @@ For Gemini CLI (which currently only supports stdio MCP), [`gemini-extension.jso
 
 ## Skills
 
-| Skill                      | Description                                                                                                     |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `remote-time-off-workflow` | Discover, create, approve, decline, or cancel time-off requests; consult leave balances.                        |
-| `remote-employment-lookup` | Find and inspect employment records, leave policies, payslips, and contractor invoices for a person or company. |
+| Skill                           | Description                                                                                              |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `remote-time-off-workflow`      | Submit, approve, decline, or cancel time-off requests; consult leave balances and public holidays.       |
+| `remote-payroll-and-payslips`   | View payslips, salary history, and payslip breakdowns for the logged-in employee or a managed teammate.  |
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add new skills.
 

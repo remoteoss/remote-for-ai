@@ -1,0 +1,13 @@
+{
+  "name": "remote-plugin-marketplace",
+  "owner": {
+    "name": "Remote"
+  },
+  "plugins": [
+    {
+      "name": "remote",
+      "source": "./",
+      "description": "Tools for managing HR, payroll, contractors, time off, and expenses using Remote. Includes MCP integration and skills."
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "remote",
+  "version": "0.1.0",
+  "description": "Access Remote HR, payroll, and contractor tools directly from Gemini CLI",
+  "mcpServers": {
+    "remote": {
+      "command": "npx",
+      "args": [
+        "mcp-remote@latest",
+        "${REMOTE_MCP_URL:-https://developer.remote.com/mcp}"
+      ]
+    }
+  },
+  "contextFileName": "GEMINI.md",
+  "settings": [
+    {
+      "name": "Remote MCP URL",
+      "description": "Remote MCP endpoint URL (default: https://developer.remote.com/mcp). Override only if Remote directs you to a different endpoint.",
+      "envVar": "REMOTE_MCP_URL"
+    }
+  ]
+}

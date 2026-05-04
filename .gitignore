@@ -1,0 +1,36 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node (in case contributors run tooling locally)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Local secrets / overrides
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
+
+# Build artifacts (none expected, but defensive)
+dist/
+build/
+out/
+
+# Claude / Cursor local state
+.claude/local/
+.cursor/local/

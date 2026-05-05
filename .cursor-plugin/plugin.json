@@ -1,0 +1,23 @@
+{
+  "name": "remote",
+  "displayName": "Remote",
+  "version": "0.0.1",
+  "description": "Access Remote HR, payroll, and contractor tools directly from Cursor.",
+  "author": {
+    "name": "Remote",
+    "url": "https://remote.com"
+  },
+  "homepage": "https://remote.com",
+  "repository": "https://github.com/remoteoss/remote-for-ai",
+  "license": "MIT",
+  "keywords": [
+    "hr",
+    "payroll",
+    "employment",
+    "contractors",
+    "time-off",
+    "expenses",
+    "global-employment"
+  ],
+  "logo": "assets/logo.png"
+}

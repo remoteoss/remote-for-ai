@@ -1,0 +1,27 @@
+{
+  "name": "remote",
+  "description": "Access Remote's HR, payroll, contractor, time-off, and expense tools directly from Claude Code via the Remote MCP server.",
+  "version": "0.0.1",
+  "author": {
+    "name": "Remote",
+    "url": "https://remote.com"
+  },
+  "homepage": "https://remote.com",
+  "repository": "https://github.com/remoteoss/remote-for-ai",
+  "license": "MIT",
+  "keywords": [
+    "hr",
+    "payroll",
+    "employment",
+    "contractors",
+    "time-off",
+    "expenses",
+    "global-employment"
+  ],
+  "mcpServers": {
+    "remote": {
+      "type": "http",
+      "url": "https://mcp.remote.com/mcp"
+    }
+  }
+}

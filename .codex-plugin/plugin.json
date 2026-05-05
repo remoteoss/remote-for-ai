@@ -1,0 +1,45 @@
+{
+  "name": "remote",
+  "version": "0.0.1",
+  "description": "Access Remote HR, payroll, and contractor tools directly from Codex.",
+  "author": {
+    "name": "Remote",
+    "email": "support@remote.com",
+    "url": "https://remote.com"
+  },
+  "homepage": "https://remote.com",
+  "repository": "https://github.com/remoteoss/remote-for-ai",
+  "license": "MIT",
+  "keywords": [
+    "hr",
+    "payroll",
+    "employment",
+    "contractors",
+    "time-off",
+    "expenses",
+    "global-employment"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Remote",
+    "shortDescription": "HR, payroll, and contractor management for global teams",
+    "longDescription": "Access Remote's global employment platform directly from Codex. Manage employments, approve time off and expenses, run payroll, and look up contractor invoices without leaving your editor.",
+    "developerName": "Remote",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://remote.com",
+    "privacyPolicyURL": "https://remote.com/policy/privacy-policy",
+    "termsOfServiceURL": "https://remote.com/policy/terms-of-use",
+    "defaultPrompt": [
+      "Show me all pending time off requests",
+      "List my company's employments by country",
+      "What are the latest payroll runs?"
+    ],
+    "brandColor": "#624DE3",
+    "logo": "./assets/logo.png"
+  }
+}

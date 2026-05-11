@@ -1,7 +1,7 @@
 {
   "name": "remote-plugin-marketplace",
   "interface": {
-    "displayName": "Remote"
+    "displayName": "Remote.com"
   },
   "plugins": [
     {

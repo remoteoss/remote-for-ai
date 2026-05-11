@@ -22,7 +22,7 @@
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
-    "displayName": "Remote",
+    "displayName": "Remote.com",
     "shortDescription": "HR, payroll, and contractor management for global teams",
     "longDescription": "Access Remote's global employment platform directly from Codex. Manage employments, approve time off and expenses, run payroll, and look up contractor invoices without leaving your editor.",
     "developerName": "Remote",

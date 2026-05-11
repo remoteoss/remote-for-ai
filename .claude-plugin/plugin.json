@@ -1,9 +1,10 @@
 {
   "name": "remote",
+  "displayName": "Remote.com",
   "description": "Access Remote's HR, payroll, contractor, time-off, and expense tools directly from Claude Code via the Remote MCP server.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": {
-    "name": "Remote",
+    "name": "Remote.com",
     "url": "https://remote.com"
   },
   "homepage": "https://remote.com",

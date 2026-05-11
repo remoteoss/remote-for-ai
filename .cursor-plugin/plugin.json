@@ -1,10 +1,10 @@
 {
   "name": "remote",
   "displayName": "Remote.com",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Access Remote HR, payroll, and contractor tools directly from Cursor.",
   "author": {
-    "name": "Remote",
+    "name": "Remote.com",
     "url": "https://remote.com"
   },
   "homepage": "https://remote.com",

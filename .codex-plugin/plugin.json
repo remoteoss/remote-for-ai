@@ -1,9 +1,9 @@
 {
   "name": "remote",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Access Remote HR, payroll, and contractor tools directly from Codex.",
   "author": {
-    "name": "Remote",
+    "name": "Remote.com",
     "email": "support@remote.com",
     "url": "https://remote.com"
   },
@@ -25,7 +25,7 @@
     "displayName": "Remote.com",
     "shortDescription": "HR, payroll, and contractor management for global teams",
     "longDescription": "Access Remote's global employment platform directly from Codex. Manage employments, approve time off and expenses, run payroll, and look up contractor invoices without leaving your editor.",
-    "developerName": "Remote",
+    "developerName": "Remote.com",
     "category": "Productivity",
     "capabilities": [
       "Read",

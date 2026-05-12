@@ -1,6 +1,6 @@
 {
   "name": "remote",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Access Remote HR, payroll, and contractor tools directly from Codex.",
   "author": {
     "name": "Remote.com",
@@ -39,7 +39,8 @@
       "List my company's employments by country",
       "What are the latest payroll runs?"
     ],
-    "brandColor": "#624DE3",
-    "logo": "./assets/logo.png"
+    "brandColor": "#0061FF",
+    "logo": "./assets/logo.png",
+    "composerIcon": "./assets/icon.png"
   }
 }

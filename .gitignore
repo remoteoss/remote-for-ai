@@ -31,6 +31,7 @@ dist/
 build/
 out/
 
-# Claude / Cursor local state
+# Claude / Cursor / Codex local state
 .claude/local/
 .cursor/local/
+.codex/

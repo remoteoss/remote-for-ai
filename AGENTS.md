@@ -12,6 +12,7 @@ The plugin itself contains **no proprietary code** — it is configuration, mani
 .claude-plugin/    # Claude Code manifest + marketplace
 .cursor-plugin/    # Cursor manifest + marketplace
 .codex-plugin/     # Codex manifest (with `interface` block)
+.agents/plugins/   # Codex marketplace descriptor
 gemini-extension.json  # Gemini CLI extension descriptor
 .mcp.json          # MCP server config (HTTP + OAuth 2.0)
 mcp.json           # Mirror at repo root for older Cursor versions
@@ -24,7 +25,7 @@ assets/            # Logo and other brand assets
 
 Remote MCP server uses **HTTP transport with OAuth 2.0**. The endpoint is configured in [`.mcp.json`](.mcp.json) and mirrored at [`mcp.json`](mcp.json). Two MCP config files exist:
 
-- `.mcp.json` — Claude Code format (also read by current Cursor)
+- `.mcp.json` — Claude Code format (also read by current Cursor and Codex)
 - `mcp.json` — Mirror at repo root for older Cursor versions
 
 For Gemini CLI (which currently only supports stdio MCP), [`gemini-extension.json`](gemini-extension.json) bridges via `npx mcp-remote@latest`.

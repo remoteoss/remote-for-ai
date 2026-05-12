@@ -8,6 +8,7 @@ Thanks for your interest in extending the plugin. This guide focuses on the most
 .claude-plugin/    # Claude Code manifest + marketplace
 .cursor-plugin/    # Cursor manifest + marketplace
 .codex-plugin/     # Codex manifest
+.agents/plugins/   # Codex marketplace descriptor
 gemini-extension.json  # Gemini CLI extension descriptor
 .mcp.json          # MCP server config (HTTP + OAuth)
 mcp.json           # Mirror at root for older Cursor versions

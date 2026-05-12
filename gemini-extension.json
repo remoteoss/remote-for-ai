@@ -1,6 +1,6 @@
 {
   "name": "remote",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Access Remote HR, payroll, and contractor tools directly from Gemini CLI",
   "mcpServers": {
     "remote": {

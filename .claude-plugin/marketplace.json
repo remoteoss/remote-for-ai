@@ -2,7 +2,7 @@
   "name": "remote-plugin-marketplace",
   "description": "Official marketplace for the Remote plugin — HR, payroll, contractor, time-off, and expense tools powered by the Remote MCP server.",
   "owner": {
-    "name": "Remote"
+    "name": "Remote.com"
   },
   "plugins": [
     {

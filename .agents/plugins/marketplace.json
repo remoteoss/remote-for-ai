@@ -1,0 +1,20 @@
+{
+  "name": "remote-plugin-marketplace",
+  "interface": {
+    "displayName": "Remote.com"
+  },
+  "plugins": [
+    {
+      "name": "remote",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/remoteoss/remote-for-ai.git"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

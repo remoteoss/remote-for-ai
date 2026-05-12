@@ -1,5 +1,5 @@
 {
-  "name": "remote-plugin-marketplace",
+  "name": "remote",
   "interface": {
     "displayName": "Remote"
   },
@@ -7,8 +7,8 @@
     {
       "name": "remote",
       "source": {
-        "source": "local",
-        "path": "./"
+        "source": "url",
+        "url": "https://github.com/remoteoss/remote-for-ai.git"
       },
       "policy": {
         "installation": "AVAILABLE",

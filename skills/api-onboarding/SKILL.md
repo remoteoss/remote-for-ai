@@ -95,7 +95,7 @@ curl -s -X POST \
 ```
 
 ```jsonc
-// 201 Created — shape: confirm exact envelope from the POST /v1/employments contract
+// 200 OK — shape: confirm exact envelope from the POST /v1/employments contract
 {
   "data": {
     "employment": {

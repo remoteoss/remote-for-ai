@@ -52,7 +52,7 @@ Use this sequence to locate and understand any Remote API endpoint before writin
 
 1. Start at `https://developer.remote.com/llms.txt`. This is the index of all available guides and endpoint references, each linked as a `.md` file. Read it to orient toward the right area.
 2. For a concept or how-to (authentication flows, paging conventions, data model overview), open the relevant guide at `https://developer.remote.com/docs/<slug>.md`.
-3. For a specific endpoint, open `https://developer.remote.com/reference/<operationId>.md`. Each reference page embeds an OpenAPI 3.1.0 fragment with the HTTP method, path, required scopes, path/query/body parameters, enum values, request schema, response schemas, and status codes. Read the full fragment before writing any code for that operation.
+3. For a specific endpoint, open `https://developer.remote.com/reference/<operationId>.md`. Each reference page embeds an OpenAPI fragment with the HTTP method, path, required scopes, path/query/body parameters, enum values, request schema, response schemas, and status codes. Read the full fragment before writing any code for that operation.
 4. For breadth searches - listing all paths, finding an operation ID, reading a shared schema component - pull the full machine-readable contract at `https://gateway.remote.com/v1/docs/openapi.json`. This file requires no authentication and reflects the current published contract (if something looks missing, re-check the endpoint's `.md`).
 5. Do not write request code until the contract for the exact operation is in hand. Invented paths, parameters, or scopes cause 404 or 403 failures that are hard to distinguish from real auth problems.
 
@@ -121,7 +121,7 @@ Always confirm the exact response envelope and field names from the endpoint's O
 
 - `https://developer.remote.com/llms.txt` - index of all guides and endpoint references
 - `https://developer.remote.com/docs/<slug>.md` - concept and how-to guides
-- `https://developer.remote.com/reference/<operationId>.md` - per-endpoint OpenAPI 3.1.0 fragment
+- `https://developer.remote.com/reference/<operationId>.md` - per-endpoint OpenAPI fragment
 - `https://gateway.remote.com/v1/docs/openapi.json` - full machine-readable contract (no auth required; reflects the current published contract; if something looks missing, re-check the endpoint's `.md`)
 
 ### Error Envelope

@@ -84,7 +84,7 @@ Check the proposed auth approach and endpoint list against the OpenAPI contract.
 ```
 Recommended path:
 1. Load api-auth to obtain a sandbox token.
-2. Fetch https://developer.remote.com/reference/listEmployments.md for the full contract.
+2. Fetch the endpoint's reference page (https://developer.remote.com/reference/<operationId>.md, with the operationId found via llms.txt) for the full contract.
 3. Proceed here (api-integration) to build the request.
 ```
 

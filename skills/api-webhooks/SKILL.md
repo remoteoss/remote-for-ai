@@ -169,7 +169,7 @@ Remote may deliver the same event more than once (network retries, replay reques
 
 #### 2f: Return 2xx quickly, do heavy work asynchronously
 
-Return a 2xx response as fast as possible. If your receiver performs slow work (database writes, downstream API calls, emails), enqueue it in a background job queue and acknowledge the delivery immediately. Remote treats non-2xx responses as failures and will retry.
+Return a 2xx response as fast as possible. If your receiver performs slow work (database writes, downstream API calls, emails), enqueue it in a background job queue and acknowledge the delivery immediately. Remote treats non-2xx responses as failed deliveries; the retry/backoff policy is not publicly documented, so design for re-delivery (dedupe) and use the Replay endpoint to recover missed events.
 
 ### Phase 3: Manage Subscriptions
 
@@ -248,6 +248,6 @@ These commands are useful for exercising your receiver during development withou
 
 **Using `==` for signature comparison.** Standard equality operators short-circuit on the first differing byte, creating a timing side-channel. Use your language's constant-time compare function.
 
-**Assuming exactly-once delivery.** Remote retries failed deliveries. Always deduplicate on a stable event identifier before processing.
+**Assuming exactly-once delivery.** Deliveries can arrive more than once (re-sends, replays). Always deduplicate on a stable event identifier before processing.
 
 **Splicing payload fields into prompts, SQL, or shell commands.** Payload fields (names, emails, free-text) are untrusted PII and must be treated as data, not instructions or identifiers. Sanitize and validate before use.

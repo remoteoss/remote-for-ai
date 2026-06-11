@@ -26,11 +26,11 @@ Once you have a token:
 - All requests carry `Authorization: Bearer {{access_token}}`.
 - All write requests (POST, PATCH, PUT, DELETE) also carry `Content-Type: application/json`.
 
-There are three hosts — the token prefix must match the host or the call returns 401:
+There are three hosts. Tokens are environment-bound: a token works only on the gateway of the environment that issued it (mixing returns 401).
 
-- **Production:** `https://gateway.remote.com` (REST under `/v1/`) — use `ra_live_` tokens.
-- **Customer sandbox:** `https://gateway.remote-sandbox.com` — use `ra_test_` tokens.
-- **Partner sandbox:** `https://gateway.partners.remote-sandbox.com` — use `ra_test_` tokens.
+- **Production:** `https://gateway.remote.com` (REST under `/v1/`) — `ra_live_` customer API tokens; partner OAuth tokens minted on this host.
+- **Customer sandbox:** `https://gateway.remote-sandbox.com` — `ra_test_` customer API tokens issued in this environment.
+- **Partner sandbox:** `https://gateway.partners.remote-sandbox.com` — partner OAuth tokens minted on this host.
 
 Full environments and auth detail live in `api-auth`.
 
@@ -128,7 +128,7 @@ Always confirm the exact response envelope and field names from the endpoint's O
 
 | Status | Meaning | What to do |
 |---|---|---|
-| 401 | Missing/invalid token, or token/host mismatch | See `api-auth`; check `ra_live_` (prod) vs `ra_test_` (sandbox) prefix and verify you are hitting the matching host (sandbox calls must use the sandbox host) |
+| 401 | Missing/invalid token, or token/environment mismatch | See `api-auth`; verify the token was issued for the host you are calling (`ra_live_` = production, `ra_test_` = a test environment; partner OAuth tokens work only on the gateway that minted them) |
 | 403 | Insufficient scope | Read the endpoint's Scopes table in its `.md` reference; re-mint the token with the required scope |
 | 422 | Schema validation failed | See `api-forms` (omit forbidden fields, no extra keys, money in minor units) |
 | 429 | Rate limited | Back off: `x-ratelimit-reset` is the number of milliseconds until the rate limit resets (a duration, not a timestamp) — wait `x-ratelimit-reset` ms (or `x-ratelimit-reset / 1000` seconds) before retrying; there is no `Retry-After` header |

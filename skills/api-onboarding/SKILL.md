@@ -19,7 +19,7 @@ Not for operating your workspace via the MCP. Not for non-hire form writes (cont
 
 ## Prerequisites
 
-- **An access token.** See `api-auth` for the full acquisition flow. The invite step requires a company-scoped token obtained through the Authorization Code flow.
+- **An access token.** See `api-auth` for the full acquisition flow. The invite step accepts company-scoped tokens only — per the endpoint's declared security schemes (`CustomerAPIToken`, `OAuth2AuthorizationCode`): a customer API token, or a partner token from the authorization-code (company-consent) flow. `client_credentials` and JWT-assertion tokens are not declared for it — partners should obtain a company-scoped token first.
 - **Form mechanics.** All schema fetching, if/then/else handling, x-jsf vendor extensions, and 422 resolution are covered in `api-forms`. Read that skill before building any form body.
 - **A `country_code` in ISO-3 format** (e.g. `PRT`, `GBR`, `AUS`). The `/v1/countries` endpoint lists supported country codes.
 - **An `employment_type`**: `employee` (EOR), `global_payroll_employee` (Global Payroll), or `contractor`.
@@ -152,7 +152,8 @@ Once all required forms are complete, send the invite to trigger the employee's 
 curl -s -X POST \
   -H "Authorization: Bearer {{access_token}}" \
   "https://gateway.remote.com/v1/employments/{{employment_id}}/invite"
-# Requires a company-scoped access token (Authorization Code flow).
+# Company-scoped token required — customer API token or partner authorization-code
+# token (the endpoint's declared security schemes).
 # The invite email is sent immediately. Do not run this against real people in tests.
 ```
 

@@ -46,14 +46,14 @@ All three environments use the same path conventions. The auth token endpoint an
 
 | Environment | Gateway host (REST + auth) | App host | Notes |
 |---|---|---|---|
-| Production | `https://gateway.remote.com` | `https://remote.com` | Use `ra_live_` API tokens. |
-| Customer sandbox | `https://gateway.remote-sandbox.com` | `https://remote-sandbox.com` | Use `ra_test_` API tokens. |
-| Partner sandbox | `https://gateway.partners.remote-sandbox.com` | `https://partners.remote-sandbox.com` | Use `ra_test_` OAuth tokens. |
+| Production | `https://gateway.remote.com` | `https://remote.com` | Customer `ra_live_` API tokens; partner OAuth tokens minted here. |
+| Customer sandbox | `https://gateway.remote-sandbox.com` | `https://remote-sandbox.com` | Customer `ra_test_` API tokens issued in this environment. |
+| Partner sandbox | `https://gateway.partners.remote-sandbox.com` | `https://partners.remote-sandbox.com` | Partner OAuth tokens minted here; companies created in this environment can also issue `ra_test_` API tokens for it. |
 
 Token endpoint: `POST {host}/auth/oauth2/token`
 Authorize endpoint: `GET {host}/auth/oauth2/authorize`
 
-**Critical:** the token prefix selects the environment. A `ra_live_` token sent to `gateway.remote-sandbox.com`, or vice versa, returns 401. Match prefix to host every time.
+**Critical:** tokens are environment-bound — a token works only on the gateway of the environment that issued it. For customer API tokens the prefix marks the environment class (`ra_live_` = production, `ra_test_` = a test environment); partner OAuth tokens work only on the host that minted them. A mismatched token returns 401.
 
 ### Phase 2: Customer Auth (Static API Token)
 
@@ -265,7 +265,7 @@ Optional — if you have `remotecli` installed: `remotecli login` (PKCE, sandbox
 
 ### Common pitfalls
 
-**Mixing token and host environments.** A `ra_live_` customer token sent to a sandbox host, or `ra_test_` sent to production, returns 401. Match token prefix to host every time — they are not interchangeable.
+**Mixing token and host environments.** A `ra_live_` customer token sent to a test host, or `ra_test_` sent to production, returns 401 — and a partner OAuth token works only on the gateway that minted it. Always use a token on the gateway of the environment that issued it.
 
 **Expecting a `refresh_token` from `client_credentials` or JWT assertion.** Only the `authorization_code` flow returns a `refresh_token`. The other two flows require you to re-request a fresh token directly when the current one expires.
 

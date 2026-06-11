@@ -123,9 +123,10 @@ curl -s -X POST \
   -H "Authorization: Bearer {{access_token}}" \
   -H "Content-Type: application/json" \
   -d '{"<form_name>": {"field_a": "value_a", "annual_gross_salary": 7920000}}' \
-  "https://gateway.remote.com/v1/contract-amendments"
+  "https://gateway.remote.com/{{write_endpoint_path}}"
 # Note: the wrapper key is the form name (e.g. "contract_amendment", "address_details"),
-# not the literal string "form".
+# not the literal string "form". The path is the write operation's own endpoint
+# (e.g. /v1/contract-amendments) — find it via the api-integration discovery protocol.
 ```
 
 ### Phase 5: Handle 422
@@ -208,7 +209,7 @@ curl -s -X POST \
 ```
 
 ```jsonc
-// 201 — shape: confirm exact envelope from the contract-amendments endpoint reference
+// 200 — shape: confirm exact envelope from the contract-amendments endpoint reference
 {
   "data": {
     "contract_amendment": {

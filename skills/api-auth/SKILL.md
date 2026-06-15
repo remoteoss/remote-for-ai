@@ -285,12 +285,6 @@ Error (invalid or expired JWT — confirm exact shape from authentication.md):
 { "error": "invalid_grant" }
 ```
 
-### Other Partner Auth: Client Token (Marketing)
-
-Remote's authentication overview lists a fifth partner auth method: a bearer Client Token for partner Marketing endpoints. These tokens carry no PII or sensitive data — they are scoped to non-sensitive marketing content only.
-
-Public documentation does not describe how to obtain or refresh a Client Token. See `developer.remote.com/docs/authentication.md` and contact your Remote partner contact for issuance details. The four OAuth token-acquisition flows above remain the core path for all operational API access.
-
 ### Phase 8: Use the Token
 
 Once you have any access token, attach it as a bearer credential to every API call:

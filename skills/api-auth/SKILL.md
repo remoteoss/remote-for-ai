@@ -21,7 +21,7 @@ Covers every credential and token-acquisition path for code that calls the Remot
 ## Prerequisites
 
 **Customer integrations:**
-- A Remote account with admin or owner permissions to generate an API token under Settings -> Integrations & APIs.
+- A Remote account with admin or owner permissions to generate an API token under Company Settings -> Integrations & APIs -> Remote API -> Generate API Token.
 
 **Partner integrations:**
 - A `CLIENT_ID` and `CLIENT_SECRET` issued by Remote.

@@ -1,6 +1,6 @@
 ---
 name: api-auth
-description: Authenticate to the Remote.com REST API and obtain access tokens for an integration. Use when setting up API access, choosing between customer (API token) and partner (OAuth) auth, implementing the four partner flows (client_credentials, authorization_code + refresh_token, JWT assertion, basic-auth token requests), getting company consent, picking the environment/base host, handling token lifecycle/refresh, or resolving 401/403 errors. Do NOT use for the in-editor Remote MCP session (browser OAuth, handled by the host plugin), endpoint discovery (api-integration), form bodies (api-forms), onboarding (api-onboarding), or webhooks (api-webhooks).
+description: Authenticate to the Remote.com REST API and obtain access tokens for an integration. Use when setting up API access, choosing between customer (API token) and partner (OAuth) auth, implementing the four partner flows (client_credentials, authorization_code, refresh_token, JWT bearer assertion), getting company consent, picking the environment/base host, handling token lifecycle/refresh, or resolving 401/403 errors. Do NOT use for the in-editor Remote MCP session (browser OAuth, handled by the host plugin), endpoint discovery (api-integration), form bodies (api-forms), onboarding (api-onboarding), or webhooks (api-webhooks).
 license: MIT
 ---
 
@@ -42,18 +42,19 @@ Covers every credential and token-acquisition path for code that calls the Remot
 
 ### Phase 1: Choose the Environment
 
-All three environments use the same path conventions. The auth token endpoint and the REST API share the same gateway host.
+Both environments use the same path conventions. The auth token endpoint and the REST API share the same gateway host. Customers and partners both use these hosts.
 
 | Environment | Gateway host (REST + auth) | App host | Notes |
 |---|---|---|---|
 | Production | `https://gateway.remote.com` | `https://remote.com` | Customer `ra_live_` API tokens; partner OAuth tokens minted here. |
-| Customer sandbox | `https://gateway.remote-sandbox.com` | `https://remote-sandbox.com` | Customer `ra_test_` API tokens issued in this environment. |
-| Partner sandbox | `https://gateway.partners.remote-sandbox.com` | `https://partners.remote-sandbox.com` | Partner OAuth tokens minted here; companies created in this environment can also issue `ra_test_` API tokens for it. |
+| Sandbox | `https://gateway.remote-sandbox.com` | `https://remote-sandbox.com` | Customer `ra_test_` API tokens; partner OAuth tokens minted here. |
+
+`https://gateway.partners.remote-sandbox.com` is an alternate partner sandbox host that also appears as a valid JWT `aud` value (see Phase 7). The official partner docs use `gateway.remote-sandbox.com` for all partner flows in sandbox.
 
 Token endpoint: `POST {host}/auth/oauth2/token`
 Authorize endpoint: `GET {host}/auth/oauth2/authorize`
 
-**Critical:** tokens are environment-bound — a token works only on the gateway of the environment that issued it. For customer API tokens the prefix marks the environment class (`ra_live_` = production, `ra_test_` = a test environment); partner OAuth tokens work only on the host that minted them. A mismatched token returns 401.
+**Critical:** tokens are environment-bound — a token works only on the gateway of the environment that issued it. For customer API tokens the prefix marks the environment class (`ra_live_` = production, `ra_test_` = sandbox); partner OAuth tokens work only on the host that minted them. A mismatched token returns 401.
 
 ### Phase 2: Customer Auth (Static API Token)
 
@@ -65,6 +66,8 @@ curl -s \
   -H "Content-Type: application/json" \
   "https://gateway.remote.com/v1/companies"
 ```
+
+For sandbox, use `ra_test_{{your_token}}` against `https://gateway.remote-sandbox.com`.
 
 Success (200 — confirm exact envelope from the endpoint reference):
 
@@ -95,6 +98,22 @@ The customer model is for direct company-owned integrations. Partner-only endpoi
 | Integration acts on behalf of a company (company consent required) | `authorization_code` (then `refresh_token` to renew) |
 | Integration acts as a specific user or employee, with verified identity | JWT bearer assertion |
 
+```mermaid
+flowchart TD
+    startNode[Call the Remote REST API] --> who{Who acts?}
+    who -->|"Own company data"| customer[Customer API token]
+    who -->|"Partner integration"| partner{On behalf of?}
+    partner -->|"Itself, no user context"| cc[client_credentials]
+    partner -->|"A company, with consent"| ac[authorization_code]
+    partner -->|"A specific user or employee"| jwt[JWT bearer assertion]
+    ac --> refresh[refresh_token to renew]
+    customer --> useToken[Bearer token on the env gateway host]
+    cc --> useToken
+    ac --> useToken
+    jwt --> useToken
+    refresh --> useToken
+```
+
 All partner token requests are:
 - Method: `POST {host}/auth/oauth2/token`
 - Content-Type: `application/x-www-form-urlencoded`
@@ -111,7 +130,7 @@ curl -s -X POST \
   -u "$CLIENT_ID:$CLIENT_SECRET" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   --data-urlencode "grant_type=client_credentials" \
-  "https://gateway.partners.remote-sandbox.com/auth/oauth2/token"
+  "https://gateway.remote-sandbox.com/auth/oauth2/token"
 ```
 
 Success (200):
@@ -156,7 +175,7 @@ curl -s -X POST \
   -H "Content-Type: application/x-www-form-urlencoded" \
   --data-urlencode "grant_type=authorization_code" \
   --data-urlencode "code={{authorization_code}}" \
-  "https://gateway.partners.remote-sandbox.com/auth/oauth2/token"
+  "https://gateway.remote-sandbox.com/auth/oauth2/token"
 ```
 
 Success (200):
@@ -174,6 +193,24 @@ Success (200):
 
 Persist `company_id` and `user_id` from the response — they identify which company and admin completed consent. Eligible partners may also shortcut at company creation: `POST /eor/v1/companies?action=get_oauth_access_tokens`.
 
+Company-creation shortcut success (200 — confirm exact envelope from the endpoint reference):
+
+```json
+{
+  "data": {
+    "company": {
+      "id": "{{company_id}}",
+      "name": "..."
+    },
+    "tokens": {
+      "access_token": "{{access_token}}",
+      "refresh_token": "{{refresh_token}}",
+      "expires_in": 3600
+    }
+  }
+}
+```
+
 Expired or already-used code (error — confirm exact shape from authentication.md):
 
 ```json
@@ -190,10 +227,21 @@ curl -s -X POST \
   -H "Content-Type: application/x-www-form-urlencoded" \
   --data-urlencode "grant_type=refresh_token" \
   --data-urlencode "refresh_token={{refresh_token}}" \
-  "https://gateway.partners.remote-sandbox.com/auth/oauth2/token"
+  "https://gateway.remote-sandbox.com/auth/oauth2/token"
 ```
 
-Success: same shape as authorization_code (includes a new `access_token` and `refresh_token`).
+Success (200):
+
+```json
+{
+  "access_token": "{{access_token}}",
+  "refresh_token": "{{refresh_token}}",
+  "token_type": "Bearer",
+  "expires_in": 3600
+}
+```
+
+The returned `refresh_token` is the same value you sent (reusable, not rotated). The response does not include `company_id` or `user_id` — persist those from the original `authorization_code` exchange.
 
 ### Phase 7: Partner Flow — JWT Bearer Assertion
 
@@ -205,7 +253,7 @@ The JWT is signed HS256 using `CLIENT_SECRET` and must carry these claims:
 |---|---|
 | `iss` | `CLIENT_ID` |
 | `sub` | `urn:remote-api:company-manager:user:<user-id>` for a company manager, or `urn:remote-api:employee:employment:<employment-id>` for an employee |
-| `aud` | The exact gateway URL being called (e.g. `https://gateway.partners.remote-sandbox.com`) |
+| `aud` | Auth base URL for the target environment — must match the token-endpoint host, not the REST endpoint being called. Exactly one of: `https://gateway.remote.com/auth`, `https://gateway.remote-sandbox.com/auth`, `https://gateway.partners.remote-sandbox.com/auth` |
 | `exp` | Unix timestamp no more than 10 minutes in the future |
 | `scope` | Space-separated `resource:action` scopes (optional; omitting grants all scopes) |
 
@@ -216,7 +264,7 @@ curl -s -X POST \
   -H "Content-Type: application/x-www-form-urlencoded" \
   --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer" \
   --data-urlencode "assertion={{signed_jwt}}" \
-  "https://gateway.partners.remote-sandbox.com/auth/oauth2/token"
+  "https://gateway.remote-sandbox.com/auth/oauth2/token"
 ```
 
 Success (200):
@@ -237,6 +285,12 @@ Error (invalid or expired JWT — confirm exact shape from authentication.md):
 { "error": "invalid_grant" }
 ```
 
+### Other Partner Auth: Client Token (Marketing)
+
+Remote's authentication overview lists a fifth partner auth method: a bearer Client Token for partner Marketing endpoints. These tokens carry no PII or sensitive data — they are scoped to non-sensitive marketing content only.
+
+Public documentation does not describe how to obtain or refresh a Client Token. See `developer.remote.com/docs/authentication.md` and contact your Remote partner contact for issuance details. The four OAuth token-acquisition flows above remain the core path for all operational API access.
+
 ### Phase 8: Use the Token
 
 Once you have any access token, attach it as a bearer credential to every API call:
@@ -245,7 +299,7 @@ Once you have any access token, attach it as a bearer credential to every API ca
 curl -s \
   -H "Authorization: Bearer {{access_token}}" \
   -H "Content-Type: application/json" \
-  "https://gateway.partners.remote-sandbox.com/v1/companies"
+  "https://gateway.remote-sandbox.com/v1/companies"
 ```
 
 ## Quick Reference
@@ -261,19 +315,35 @@ Two separate syntax styles exist depending on the flow:
 
 The per-endpoint Scopes table in `developer.remote.com/reference/<operationId>.md` is the authoritative source for which scopes each endpoint requires. No full scope catalog is published as a standalone list.
 
-Optional — if you have `remotecli` installed: `remotecli login` (PKCE, sandbox) mints a working token quickly for exploratory use.
+Optional — if you have the public `remotecli` (github.com/remoteoss/remote-cli) installed: `remotecli login` (PKCE, sandbox) mints a working token quickly for exploratory use.
+
+### Auth Errors
+
+Standard OAuth 2.0 error codes on the token endpoint (`POST {host}/auth/oauth2/token`). Confirm exact response bodies from the token endpoint reference.
+
+| Error / status | Typical cause | What to do |
+|---|---|---|
+| `invalid_client` | Wrong `CLIENT_ID`/`CLIENT_SECRET`, or missing/incorrect HTTP Basic header | Verify credentials; confirm Base64 encoding of `client_id:client_secret` |
+| `invalid_grant` | Expired or already-used authorization `code`, invalid/expired JWT assertion, or bad `refresh_token` | Re-run authorization_code flow, re-mint JWT, or check stored refresh token |
+| `invalid_request` | Missing required parameter (`grant_type`, `code`, `refresh_token`, `assertion`) | Inspect request body against the flow's required fields |
+| `unsupported_grant_type` | Wrong `grant_type` value | Use `client_credentials`, `authorization_code`, `refresh_token`, or `urn:ietf:params:oauth:grant-type:jwt-bearer` |
+| `invalid_scope` | Scope not recognized or not permitted for this client | Check the endpoint's Scopes table; use URL-style scopes for consent, `resource:action` for JWT |
+| REST 401 | Missing/invalid token, or token/host environment mismatch | Verify bearer header; match token to gateway host (`ra_live_` = production, `ra_test_` = sandbox) |
+| REST 403 | Token valid but insufficient scope for the endpoint | Re-mint token with required scope from the endpoint's reference page |
 
 ### Common pitfalls
 
-**Mixing token and host environments.** A `ra_live_` customer token sent to a test host, or `ra_test_` sent to production, returns 401 — and a partner OAuth token works only on the gateway that minted it. Always use a token on the gateway of the environment that issued it.
+**Mixing token and host environments.** A `ra_live_` customer token sent to sandbox, or `ra_test_` sent to production, returns 401 — and a partner OAuth token works only on the gateway that minted it. Always use a token on the gateway of the environment that issued it (`gateway.remote.com` for production, `gateway.remote-sandbox.com` for sandbox).
 
 **Expecting a `refresh_token` from `client_credentials` or JWT assertion.** Only the `authorization_code` flow returns a `refresh_token`. The other two flows require you to re-request a fresh token directly when the current one expires.
 
-**Sending token requests as JSON.** The token endpoint (`/auth/oauth2/token`) requires `Content-Type: application/x-www-form-urlencoded` and HTTP Basic client auth. Sending JSON or putting credentials in the body will fail.
+**Sending token requests as JSON.** The token endpoint (`/auth/oauth2/token`) requires `Content-Type: application/x-www-form-urlencoded` and HTTP Basic client auth (except JWT assertion). Sending JSON or putting credentials in the body will fail.
 
 **Letting the 5-minute authorization code expire.** The `code` from the authorization_code callback is valid for only 5 minutes. Exchange it immediately after the redirect; do not store it and exchange it later.
 
 **Letting the JWT `exp` drift beyond 10 minutes.** The `exp` claim must be no more than 10 minutes in the future at the time of the token request. Generate the JWT immediately before the request; do not pre-generate and cache it.
+
+**Using the wrong JWT `aud` value.** The `aud` claim must be the auth base URL with `/auth` suffix (e.g. `https://gateway.remote-sandbox.com/auth`), not the REST endpoint URL and not the gateway host without `/auth`.
 
 **Letting access tokens lapse without proactive refresh.** Access tokens expire after 3600 seconds (1 hour). Cache the expiry time and refresh (or re-request) proactively — for example 5 minutes before the known expiry — rather than waiting for a 401.
 

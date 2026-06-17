@@ -25,6 +25,7 @@ Once you have a token:
 
 - All requests carry `Authorization: Bearer {{access_token}}`.
 - All write requests (POST, PATCH, PUT, DELETE) also carry `Content-Type: application/json`.
+- Match the endpoint to the token type. Customer API tokens (`ra_live_` / `ra_test_`) and company-scoped partner tokens should call customer/company endpoints such as `/v1/employments`; partner integration endpoints such as `GET /v1/companies` require a partner OAuth `client_credentials` token.
 
 There are three hosts. Tokens are environment-bound: a token works only on the gateway of the environment that issued it (mixing returns 401).
 
@@ -95,16 +96,18 @@ The request below is illustrative — find the real operation and its exact requ
 ```bash
 curl -s \
   -H "Authorization: Bearer {{access_token}}" \
-  "https://gateway.remote.com/v1/companies"
+  "https://gateway.remote.com/v1/employments?page_size=1"
 ```
 
 ```jsonc
 // 200 (shape - confirm exact envelope from the endpoint's OpenAPI)
 {
   "data": {
-    "companies": [
-      { "id": "...", "name": "..." }
+    "employments": [
+      { "id": "...", "status": "active" }
     ],
+    "current_page": 1,
+    "total_pages": 1,
     "total_count": 1
   }
 }
@@ -114,6 +117,8 @@ curl -s \
 ```
 
 Always confirm the exact response envelope and field names from the endpoint's OpenAPI fragment before relying on any shape shown here.
+
+Do not use `GET /v1/companies` as a generic smoke test. That endpoint lists companies that authorized a partner integration and is partner/client-credentials only; customer `ra_live_` / `ra_test_` tokens should be verified against customer-accessible endpoints such as `GET /v1/employments`.
 
 ## Quick Reference
 
@@ -130,14 +135,14 @@ Always confirm the exact response envelope and field names from the endpoint's O
 |---|---|---|
 | 401 | Missing/invalid token, or token/environment mismatch | See `api-auth`; verify the token was issued for the host you are calling (`ra_live_` = production, `ra_test_` = a test environment; partner OAuth tokens work only on the gateway that minted them) |
 | 403 | Insufficient scope | Read the endpoint's Scopes table in its `.md` reference; re-mint the token with the required scope |
-| 422 | Schema validation failed | See `api-forms` (omit forbidden fields, no extra keys, money in minor units) |
+| 422 | Schema validation failed | See `api-forms` (omit forbidden fields, no extra keys, money scaled ×100 incl. zero-decimal currencies) |
 | 429 | Rate limited | Back off: `x-ratelimit-reset` is the number of milliseconds until the rate limit resets (a duration, not a timestamp) — wait `x-ratelimit-reset` ms (or `x-ratelimit-reset / 1000` seconds) before retrying; there is no `Retry-After` header |
 
 ### Data Formats
 
 Cross-cutting encoding rules that apply across all endpoints:
 
-- **Money:** amounts are in the currency's minor units (e.g. cents for USD, pence for GBP). The `api-forms` skill covers the `x-jsf-currency` annotation for employment/contractor form fields.
+- **Money:** amounts are integers scaled **×100** from the major currency unit (cents for USD, pence for GBP) — and Remote applies the ×100 even to conventionally zero-decimal currencies like JPY (¥8,000,000 → `800000000`, not `8000000`). Do not apply the "JPY/KRW aren't multiplied" rule from other payment APIs. The `api-forms` skill covers the `x-jsf-presentation.currency` annotation and the full encoding rules for employment/contractor form fields.
 - **Timestamps:** use ISO 8601 with a literal `T` separator and `Z` suffix (UTC). Example: `2026-03-15T09:00:00Z`. Avoid numeric timezone offsets.
 - **Date-only fields:** use `YYYY-MM-DD`. Example: `2026-03-15`.
 - **File downloads:** the API returns files as a base64-encoded data URI in a `content` field. Maximum size is approximately 20 MB. File upload encoding varies by endpoint; confirm from the endpoint's OpenAPI fragment and the `working-with-files.md` guide.
@@ -148,7 +153,7 @@ This is a non-authoritative compass to help orient discovery. The live `llms.txt
 
 | Area | What you can do |
 |---|---|
-| Companies | Read company profile and settings |
+| Companies | Read company profile and settings; list authorized companies with partner `client_credentials` tokens |
 | Employments | Full-cycle employee management (create, update, read, offboard) |
 | Contractors | Contractor onboarding and management |
 | Countries | Read supported countries, required fields, and compliance data |
@@ -164,6 +169,8 @@ This is a non-authoritative compass to help orient discovery. The live `llms.txt
 ### Common Pitfalls
 
 **Inventing endpoint paths, parameters, scopes, or status codes.** The API does not have the same surface area as other HR APIs. Always confirm against `openapi.json` or the endpoint's `.md` reference before writing code. A 404 on a plausible-looking path usually means the endpoint does not exist, not that it is hidden behind auth.
+
+**Using partner-only endpoints as customer-token smoke tests.** `GET /v1/companies` requires a partner OAuth `client_credentials` token. Customer `ra_live_` / `ra_test_` tokens should be tested against customer-accessible endpoints such as `GET /v1/employments?page_size=1`.
 
 **Assuming a pagination scheme.** Remote uses cursor-based paging on some endpoints and page/limit on others. Read the paging parameters and response fields from the specific endpoint's contract - do not carry assumptions from one endpoint to another.
 

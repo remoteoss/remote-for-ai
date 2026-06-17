@@ -56,7 +56,7 @@ curl -s -X POST \
   "https://gateway.remote.com/v1/webhook-callbacks"
 ```
 
-Success response (200) — the `signing_key` is shown only once; store it immediately in secure storage:
+Success response (201 Created; the published OpenAPI contract declares 200) — the `signing_key` is shown only once; store it immediately in secure storage:
 
 ```json
 {
@@ -140,13 +140,14 @@ if age_ms > 300_000:   # 5 minutes
 
 #### 2d: Parse the flat event envelope
 
-Webhook payloads are flat JSON — an `event_type` field plus resource-specific ID fields. There is no generic `data` or `payload` wrapper. Branch on `event_type`, then read that event's own fields.
+Webhook payloads are flat JSON — an `event_type` field, a `company_id` field, plus resource-specific ID fields. There is no generic `data` or `payload` wrapper. Branch on `event_type`, then read that event's own fields. Every delivery carries a top-level `company_id` (the company slug) so a single receiver URL serving many companies can route each event to the right one.
 
 Sample delivery body — `employment.onboarding.completed`:
 
 ```json
 {
   "event_type": "employment.onboarding.completed",
+  "company_id": "{{company_id}}",
   "employment_id": "{{employment_id}}"
 }
 ```
@@ -156,6 +157,7 @@ Sample delivery body — `payslip.released`:
 ```json
 {
   "event_type": "payslip.released",
+  "company_id": "{{company_id}}",
   "employment_id": "{{employment_id}}",
   "payslip_id": "{{payslip_id}}"
 }

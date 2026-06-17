@@ -49,7 +49,7 @@ Both environments use the same path conventions. The auth token endpoint and the
 | Production | `https://gateway.remote.com` | `https://remote.com` | Customer `ra_live_` API tokens; partner OAuth tokens minted here. |
 | Sandbox | `https://gateway.remote-sandbox.com` | `https://remote-sandbox.com` | Customer `ra_test_` API tokens; partner OAuth tokens minted here. |
 
-`https://gateway.partners.remote-sandbox.com` is an alternate partner sandbox host that also appears as a valid JWT `aud` value (see Phase 7). The official partner docs use `gateway.remote-sandbox.com` for all partner flows in sandbox.
+Partners also have a sandbox at `https://gateway.partners.remote-sandbox.com` (a valid JWT `aud` value — see Phase 7).
 
 Token endpoint: `POST {host}/auth/oauth2/token`
 Authorize endpoint: `GET {host}/auth/oauth2/authorize`
@@ -64,19 +64,23 @@ A company admin or owner generates a static bearer token in Remote Settings -> I
 curl -s \
   -H "Authorization: Bearer ra_live_{{your_token}}" \
   -H "Content-Type: application/json" \
-  "https://gateway.remote.com/v1/companies"
+  "https://gateway.remote.com/v1/employments?page_size=1"
 ```
 
 For sandbox, use `ra_test_{{your_token}}` against `https://gateway.remote-sandbox.com`.
+
+Use a customer-accessible endpoint when verifying customer API tokens. `GET /v1/companies` is partner-only and requires a partner OAuth `client_credentials` token; a failed `/v1/companies` call does not prove a customer `ra_live_` / `ra_test_` token is invalid.
 
 Success (200 — confirm exact envelope from the endpoint reference):
 
 ```json
 {
   "data": {
-    "companies": [
-      { "id": "...", "name": "..." }
+    "employments": [
+      { "id": "...", "status": "active" }
     ],
+    "current_page": 1,
+    "total_pages": 1,
     "total_count": 1
   }
 }
@@ -253,7 +257,7 @@ The JWT is signed HS256 using `CLIENT_SECRET` and must carry these claims:
 |---|---|
 | `iss` | `CLIENT_ID` |
 | `sub` | `urn:remote-api:company-manager:user:<user-id>` for a company manager, or `urn:remote-api:employee:employment:<employment-id>` for an employee |
-| `aud` | Auth base URL for the target environment — must match the token-endpoint host, not the REST endpoint being called. Exactly one of: `https://gateway.remote.com/auth`, `https://gateway.remote-sandbox.com/auth`, `https://gateway.partners.remote-sandbox.com/auth` |
+| `aud` | The auth base URL (host + `/auth`), not the REST endpoint being called — and it must match the server you call. One of: `https://gateway.remote.com/auth` (production), `https://gateway.remote-sandbox.com/auth` (sandbox), or `https://gateway.partners.remote-sandbox.com/auth` (partner sandbox). |
 | `exp` | Unix timestamp no more than 10 minutes in the future |
 | `scope` | Space-separated `resource:action` scopes (optional; omitting grants all scopes) |
 
@@ -293,8 +297,10 @@ Once you have any access token, attach it as a bearer credential to every API ca
 curl -s \
   -H "Authorization: Bearer {{access_token}}" \
   -H "Content-Type: application/json" \
-  "https://gateway.remote-sandbox.com/v1/companies"
+  "https://gateway.remote-sandbox.com/v1/employments?page_size=1"
 ```
+
+Choose a verification endpoint that matches the token type. Customer API tokens (`ra_live_` / `ra_test_`) and company-scoped partner tokens can call customer/company endpoints such as `/v1/employments`; `/v1/companies` lists companies that authorized a partner integration and is only for partner `client_credentials` tokens.
 
 ## Quick Reference
 
@@ -342,5 +348,7 @@ Standard OAuth 2.0 error codes on the token endpoint (`POST {host}/auth/oauth2/t
 **Letting access tokens lapse without proactive refresh.** Access tokens expire after 3600 seconds (1 hour). Cache the expiry time and refresh (or re-request) proactively — for example 5 minutes before the known expiry — rather than waiting for a 401.
 
 **Using customer API token patterns for partner-only endpoints.** Customer API tokens (`ra_live_` / `ra_test_`) are for company-owned integrations. Partner-only endpoints require OAuth tokens obtained through one of the four partner flows.
+
+**Verifying customer tokens against `/v1/companies`.** `GET /v1/companies` is a partner/client-credentials endpoint. To smoke-test a customer API token, call a customer-accessible endpoint such as `GET /v1/employments?page_size=1` instead.
 
 **Assuming a published full scope catalog.** No exhaustive list of all scopes is published. The authoritative source for required scopes is the Scopes table on each endpoint's reference page at `developer.remote.com`.

@@ -44,7 +44,7 @@ For every form in the sequence below, follow the full `api-forms` workflow:
 
 1. Fetch the schema from `GET /v1/countries/{country_code}/{form}` (pass `employment_id` for forms after the initial create — see `api-forms` Phase 1 for the full schema endpoint table).
 2. Read all `required`, `enum`/`oneOf`, `if`/`then`/`else` conditionals, and money field encodings from the fetched schema.
-3. Build a conforming body: omit conditionally-forbidden fields entirely (do not send as `null`), encode money in integer minor units, send no keys outside `properties`.
+3. Build a conforming body: omit conditionally-forbidden fields entirely (do not send as `null`), encode money as integers scaled ×100 (incl. conventionally zero-decimal currencies like JPY — see `api-forms`), send no keys outside `properties`.
 4. Submit and handle 422 by re-fetching the schema and re-validating — see `api-forms` Phase 5.
 
 Never hardcode field names or required-field lists. The live schema is the only authoritative source.
@@ -63,6 +63,8 @@ Note: Global Payroll requires `engaged_by_entity_slug` on the initial create req
 
 **Contractor (`contractor`):**
 `contractor_basic_information`, `contractor_contract_details`
+
+Note: `contractor` is a valid `type` on `POST /v1/employments`, so the create step works for contractors. But the PATCH update endpoint does not support writing contractor forms — the create endpoint documents this ("Please contact Remote if you need to update contractors via API since it's currently not supported"). The contractor PATCH-then-invite sequence below applies to EOR and Global Payroll only; for contractors, contact Remote to complete onboarding beyond the create step.
 
 The live `supported_json_schemas` for the target country is canonical. Some forms may not exist for a given country; some countries may require additional forms not listed here.
 
@@ -95,7 +97,7 @@ curl -s -X POST \
 ```
 
 ```jsonc
-// 200 OK — shape: confirm exact envelope from the POST /v1/employments contract
+// 201 Created (the published OpenAPI contract declares 200) — confirm exact envelope from the POST /v1/employments contract
 {
   "data": {
     "employment": {
@@ -107,11 +109,11 @@ curl -s -X POST \
 ```
 
 ```jsonc
-// 422 Unprocessable Entity — see api-forms Phase 5 for handling
+// 422 Unprocessable Entity — messages are ajv-style "<field>: <reason>" strings
+// (confirm the exact envelope from the contract). See api-forms Phase 5 for handling.
 {
-  "message": "Validation failed",
   "errors": [
-    { "field": "{{field_name}}", "message": "is required" }
+    "basic_information: Should have required property name"
   ]
 }
 ```
@@ -245,7 +247,7 @@ curl -s -X POST \
 |---|---|
 | `employee` (EOR) | `employment_basic_information`, `address_details`, `personal_details`, `contract_details`, `pricing_plan_details` |
 | `global_payroll_employee` | `global_payroll_basic_information`, `global_payroll_administrative_details`, `address_details`, `billing_address_details`, `bank_account_details`, `emergency_contact_details`, `global_payroll_personal_details`, `global_payroll_contract_details`, `pricing_plan_details` |
-| `contractor` | `contractor_basic_information`, `contractor_contract_details` |
+| `contractor` | `contractor_basic_information`, `contractor_contract_details` (create only — PATCH updates to contractors are not supported via API; contact Remote to complete contractor onboarding) |
 
 ### Sequence
 

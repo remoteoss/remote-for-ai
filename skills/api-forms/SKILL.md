@@ -63,17 +63,21 @@ curl -s \
 ```
 
 ```jsonc
-// 200 — shape varies by form; the schema is inside the response body
-// Confirm the exact envelope from the endpoint reference.
-// The JSON Schema is typically at data.schema or similar.
+// 200 — the JSON Schema is at data.schema. data.version is the schema's
+// iteration number (an integer, e.g. 7) — distinct from the
+// json_schema_version query param, which selects WHICH version to fetch
+// (default "latest"). Other schema endpoints follow the same data.schema
+// envelope; confirm from the endpoint reference if unsure.
 {
   "data": {
     "schema": {
+      "type": "object",
       "properties": { ... },
       "required": ["field_a", "field_b"],
       "additionalProperties": false,
       "allOf": [ ... ]
-    }
+    },
+    "version": 7
   }
 }
 ```
@@ -86,7 +90,7 @@ Apply all of the following mechanics. Missing any one of them is the most common
 
 **Required fields.** The `required` array lists fields that must be present. Missing any required field fails validation.
 
-**Enum and oneOf values.** For fields constrained by `enum` or `oneOf` (often written as `"oneOf": [{"const": "value", "title": "Label"}, ...]`), only listed values are accepted. An out-of-range value fails with a validation error — never invent values.
+**Enum and oneOf values.** Fields with a fixed option set use one of two shapes. `oneOf` carries the options inline as `[{"const": "value", "title": "Label"}, ...]`. `enum` carries the raw values in the `enum` array, with display labels alongside in `x-jsf-presentation.options` as `[{"value": "AB", "label": "Alberta (AB)"}, ...]`. In both cases submit the raw value / `const` — never the human-readable label — and never a value outside the listed set.
 
 **Composition keywords.** Honor `oneOf`, `anyOf`, and `allOf` as the schema specifies. `allOf` means all sub-schemas must pass; `anyOf` means at least one must pass; `oneOf` means exactly one must pass.
 
@@ -96,7 +100,10 @@ Apply all of the following mechanics. Missing any one of them is the most common
 {
   "allOf": [
     {
-      "if": { "properties": { "field_a": { "const": "yes" } } },
+      "if": {
+        "properties": { "field_a": { "const": "yes" } },
+        "required": ["field_a"]
+      },
       "then": { "required": ["dependent_field"] },
       "else": { "properties": { "dependent_field": false } }
     }
@@ -104,13 +111,22 @@ Apply all of the following mechanics. Missing any one of them is the most common
 }
 ```
 
-When the `if` condition is false, `else` applies — and if `else` sets a property to the boolean `false`, that is a boolean schema meaning the field is forbidden entirely.
+When the `if` condition is true, `then` applies; otherwise `else` applies — and if `else` sets a property to the boolean `false`, that is a boolean schema meaning the field is forbidden entirely.
+
+**Read the whole `if`, including its `required`.** An `if` almost always lists its trigger field in its own `required` (as above). This is deliberate: a `properties`-only schema is satisfied by an *absent* field (an empty object matches), so without `required` the `if` would match when `field_a` is missing and wrongly trigger `then`. Treat an `if` as satisfied only when every `if.required` field is present AND every property constraint matches. When neither condition is met (e.g. `field_a` is absent), `else` is the active branch.
 
 **The `false` boolean-schema trap.** A field declared in `properties` but set to `false` by an active conditional must be OMITTED from the body entirely. Sending it as `null`, an empty string, or any other value - or embedding it inside a nested object - fails with "boolean schema is false". The key must be entirely absent from the body.
 
 **`additionalProperties: false`.** Send no keys that are not declared in the schema's `properties`. Extra keys cause an immediate 422.
 
-**Money fields.** Amounts are in integer minor units (the smallest denomination of the currency). For most currencies this is cents (x100): 79,200.00 → `7920000`. Zero-decimal currencies (e.g. JPY, KRW) are NOT multiplied by 100 — 79,200 → `79200`. Confirm the currency and its minor-unit exponent from the schema's `x-jsf-presentation.currency` annotation on the money field. Never send a decimal float for a money field.
+**Money fields.** Amounts are integers scaled **×100 from the major currency unit** — multiply by 100. 79,200.00 → `7920000`. Remote applies this ×100 scaling **uniformly, including currencies that are conventionally zero-decimal**: a JPY salary field with a ¥2,393,152 floor is encoded as `239315200`, and ¥8,000,000 is `800000000` (not `8000000`). Do NOT apply the "JPY/KRW aren't multiplied" rule from other payment APIs (Stripe, etc.) — it does not hold for Remote. The `x-jsf-presentation.currency` annotation carries the ISO code (e.g. `"JPY"`, `"GBP"`), not an exponent; when the field has a `minimum` or `x-jsf-errorMessage.minimum` (e.g. `"Must be at least ¥2,393,152"`), use it to confirm the scale — but note that optional money fields (signing bonus, commission) often have no minimum, so apply the ×100 rule by default. Never send a decimal float for a money field.
+
+**Dynamic rules: `x-jsf-logic`.** Not every constraint is a static keyword. A schema may carry an `x-jsf-logic` object at the root with two parts:
+
+- `validations` — named cross-field rules (expressed in JSON Logic), each with its own error message. A field opts into a rule via a `x-jsf-logic-validations: ["<rule_id>"]` annotation on that field.
+- `computedValues` — values derived from other fields. A field binds a computed value to one of its attributes via `x-jsf-logic-computedAttrs` (e.g. a `minimum` salary computed from `working_hours`, or a field's `currency` pulled from another field).
+
+A body can satisfy every static keyword and still 422 because it violates an `x-jsf-logic` validation or a computed bound. When a field carries `x-jsf-logic-computedAttrs` or `x-jsf-logic-validations`, read the referenced rule in the root `x-jsf-logic` before choosing a value — the real minimum/maximum or the allowed field combination may not appear as a literal `minimum`/`maximum`/`enum` on the field itself.
 
 ### Phase 4: Submit with the Correct Verb
 
@@ -134,27 +150,25 @@ curl -s -X POST \
 A 422 Unprocessable Entity means the body failed JSON Schema validation. The error response includes a list of validation errors pointing to specific fields.
 
 ```jsonc
-// 422 — shape: confirm exact envelope from the endpoint reference
+// 422 — messages are JSON-Schema-validator (ajv-style) strings, usually
+// "<field>: <reason>". Confirm the exact envelope (object vs. array, key
+// names) from the endpoint reference; the message strings are the stable part.
 {
-  "message": "Validation failed",
   "errors": [
-    {
-      "field": "annual_gross_salary",
-      "message": "is required"
-    },
-    {
-      "field": "dependent_field",
-      "message": "boolean schema is false"
-    }
+    "contract_amendment: Should have required property annual_gross_salary",
+    "signing_bonus_amount: boolean schema is false",
+    "offer_equity_compensation: should match exactly one schema in oneOf",
+    "contract_amendment: should NOT have additional properties - foo"
   ]
 }
 ```
 
-For each error:
-- "is required" → add the field, or check whether a conditional should be making it required.
-- "boolean schema is false" → the field is conditionally forbidden; remove it from the body entirely.
-- "is not included in the list" / enum errors → re-check the `enum` / `oneOf` in the schema for that field.
-- "additional properties" → remove any key not declared in the schema's `properties`.
+For each error, match on the reason text:
+- "Should have required property X" → add field X, or check whether a conditional should be making it required (and whether the active `if` branch actually matches your other values).
+- "boolean schema is false" → the field is conditionally forbidden in the current context; remove it from the body entirely.
+- "should match exactly one schema in oneOf" / "should be equal to one of the allowed values" (enum) → re-check the `oneOf`/`enum` for that field and submit the raw `const`/value, not the label.
+- "should NOT have additional properties - X" → remove key X; it is not declared in `properties`, or it is forbidden by an active conditional.
+- a custom message (e.g. a money format like "Please, use US standard currency format. Ex: 1024.12", or a cross-field rule) → it comes from the field's `x-jsf-errorMessage` or an `x-jsf-logic` validation; fix the value or the field combination it names.
 - money / type errors → confirm minor-unit encoding and field type.
 
 Re-fetch the schema and re-validate the body before retrying.
@@ -185,7 +199,7 @@ Inspect the response. Note which fields appear in `required`, which are constrai
   "employment_id": "{{employment_id}}",
   "amendment_contract_id": "{{amendment_contract_id}}",
   "contract_amendment": {
-    // annual_gross_salary: minor units for EUR (x100).
+    // annual_gross_salary: EUR scaled ×100.
     // 79,200.00 EUR → 7920000. Confirm currency from x-jsf-presentation.currency.
     "annual_gross_salary": 7920000,
     "effective_date": "2026-08-01",
@@ -224,12 +238,12 @@ curl -s -X POST \
 **Step 4 — 422 example:**
 
 ```jsonc
-// 422 — if annual_gross_salary was missing and a conditional field was wrongly included
+// 422 — if annual_gross_salary was missing and a conditional field was wrongly
+// included. Messages are ajv-style "<field>: <reason>" strings.
 {
-  "message": "Validation failed",
   "errors": [
-    { "field": "annual_gross_salary", "message": "is required" },
-    { "field": "signing_bonus_amount", "message": "boolean schema is false" }
+    "contract_amendment: Should have required property annual_gross_salary",
+    "signing_bonus_amount: boolean schema is false"
   ]
 }
 ```
@@ -244,11 +258,15 @@ Remote's schemas use `x-jsf-*` custom keywords to carry UI and rendering metadat
 
 | Extension | What it carries |
 |---|---|
-| `x-jsf-presentation` | Rendering hints: `inputType` (e.g. `radio`, `select`, `money`, `fieldset`, `date`, `text`, `textarea`, `checkbox`); `currency` for money fields (e.g. `"EUR"`, `"GBP"`) — use this to determine the correct minor-unit multiplier. |
+| `x-jsf-presentation` | Rendering hints: `inputType` (e.g. `radio`, `select`, `money`, `fieldset`, `date`, `text`, `textarea`, `checkbox`, `file`, `countries`, `group-array`); `currency` for money fields (e.g. `"EUR"`, `"GBP"`) — use this to determine the correct minor-unit multiplier; `options` (`{value, label}` pairs) for `enum` fields. |
 | `x-jsf-order` | Display order of fields within an object — useful for building ordered UI. |
 | `x-jsf-errorMessage` | Custom validation error messages per constraint — helps map 422 error strings back to the field and rule that fired. |
+| `x-jsf-logic` | Root-level JSON Logic: `validations` (named cross-field rules, each with an error message) and `computedValues` (values derived from other fields). |
+| `x-jsf-logic-validations` | On a field: array of `x-jsf-logic` rule IDs that apply to it. |
+| `x-jsf-logic-computedAttrs` | On a field: attributes (`minimum`, `maximum`, `const`, `default`, `currency`, …) computed from other fields via `x-jsf-logic` — the effective bound may not appear as a literal keyword on the field. |
+| `x-jsf-fieldsets` | Groups flat top-level properties into visual sections. Presentation only; does not affect validation. |
 
-Remote's open-source [`json-schema-form`](https://github.com/remoteoss/json-schema-form) JavaScript library reads these extensions and transforms schemas into renderable field objects with `isVisible`, `required`, `inputType`, and validation rules. It is framework-agnostic and headless - it works server-side (Node.js >= 18.14) and with any UI layer. Using it is optional — the mechanics above work without it — but it eliminates boilerplate for UI-facing integrations.
+Remote's open-source [`@remoteoss/json-schema-form`](https://github.com/remoteoss/json-schema-form) library reads these extensions. `createHeadlessForm(schema)` returns `{ fields, handleValidation }`: `fields` is an array of renderable field objects (with `isVisible`, `required`, `inputType`, computed bounds, and validation rules already resolved), and `handleValidation(values)` validates a candidate body — including `x-jsf-logic` rules and computed attributes — returning `{ formErrors }` (an object keyed by field name) and recomputing each field's `isVisible`. It is framework-agnostic and headless (works server-side on Node.js >= 18.14 and with any UI layer). Using it is optional — the mechanics above work without it — but it resolves conditionals, computed values, and validation for you, which is the surest way to avoid 422s. Reference docs: <https://json-schema-form.vercel.app>.
 
 ## Quick Reference
 
@@ -289,7 +307,7 @@ Optional - if you have the public `remotecli` (github.com/remoteoss/remote-cli) 
 
 **Including keys not in `properties` when `additionalProperties: false`.** Any key not declared in the schema causes an immediate 422. Do not send convenience fields, metadata, or undocumented keys alongside the form body.
 
-**Sending money in major units (decimal).** Money fields take integer minor units. For most currencies this is x100 (cents, pence), but zero-decimal currencies (JPY, KRW, etc.) are not multiplied. Always confirm the exponent from the schema's `x-jsf-presentation.currency` annotation.
+**Sending money in major units, or skipping the ×100 for "zero-decimal" currencies.** Money fields take integers scaled ×100 from the major unit — pence, cents, and likewise for JPY (¥8,000,000 → `800000000`). The familiar "JPY/KRW aren't multiplied" rule from other payment APIs does NOT apply to Remote; multiply by 100 regardless of currency. Cross-check against the field's `minimum` / `x-jsf-errorMessage` when present (optional money fields often have none).
 
 **Inventing enum values.** Only values listed in `enum` or `oneOf` are accepted. Do not derive or guess values from documentation examples or prior experience with other country schemas.
 

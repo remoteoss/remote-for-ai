@@ -49,6 +49,8 @@ For every form in the sequence below, follow the full `remote-api-forms` workflo
 
 Never hardcode field names or required-field lists. The live schema is the only authoritative source.
 
+**Building an onboarding UI?** When a human drives the hire through an interface (a hiring wizard, an internal tool), render each form/step with Remote's [`@remoteoss/json-schema-form`](https://github.com/remoteoss/json-schema-form) instead of hand-coding fields — one `createHeadlessForm` per fetched schema. The library handles within-form rendering, conditional visibility, and validation; this skill's sequence handles the cross-form orchestration (POST -> PATCH -> invite) and the API calls the library does not make. When re-rendering a form to fix a 422, seed `initialValues` with the current values. See the library subsection in `remote-api-forms`.
+
 ### Phase 2: Pick the Form Set for the Employment Type
 
 The form sets below are a guide to the forms each employment type walks. The canonical source for which forms exist and which are required for a given country is the `supported_json_schemas` list returned for that country — confirm it before building.

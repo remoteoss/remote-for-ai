@@ -1,6 +1,6 @@
 ---
-name: api-webhooks
-description: Receive and verify Remote.com webhooks in an integration. Use when subscribing to events (POST /v1/webhook-callbacks), building a receiver, verifying the X-Remote-Signature HMAC, parsing the flat event payload, deduping/idempotency, or choosing which event_type to listen for. Covers HMAC-SHA256 hex over raw_body + ':' + millisecond timestamp. Do NOT use to operate via the MCP, for auth (api-auth), outbound API calls (api-integration), or form writes/onboarding (api-forms / api-onboarding).
+name: remote-api-webhooks
+description: Receive and verify Remote.com webhooks in an integration. Use when subscribing to events (POST /v1/webhook-callbacks), building a receiver, verifying the X-Remote-Signature HMAC, parsing the flat event payload, deduping/idempotency, or choosing which event_type to listen for. Covers HMAC-SHA256 hex over raw_body + ':' + millisecond timestamp. Do NOT use to operate via the MCP, for auth (remote-api-auth), outbound API calls (remote-api-integration), or form writes/onboarding (remote-api-forms / remote-api-onboarding).
 license: MIT
 ---
 
@@ -21,7 +21,7 @@ Covers the full lifecycle of receiving Remote.com webhook events in an integrati
 
 ## Prerequisites
 
-- An access token with sufficient scopes to call `POST /v1/webhook-callbacks` — see `api-auth` for how to obtain one.
+- An access token with sufficient scopes to call `POST /v1/webhook-callbacks` — see `remote-api-auth` for how to obtain one.
 - A publicly reachable HTTPS URL that Remote can POST deliveries to. Local tunneling tools (e.g. ngrok) work for development.
 - Secure storage for the `signing_key` that is returned at subscription time. It is shown only once and must never be committed to source control.
 
@@ -38,7 +38,7 @@ Covers the full lifecycle of receiving Remote.com webhook events in an integrati
 
 ### Phase 1: Subscribe
 
-Call `POST /v1/webhook-callbacks` with your receiver URL and the list of event types you want to receive. You need an access token in the `Authorization` header (see `api-auth`).
+Call `POST /v1/webhook-callbacks` with your receiver URL and the list of event types you want to receive. You need an access token in the `Authorization` header (see `remote-api-auth`).
 
 Request:
 

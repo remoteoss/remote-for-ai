@@ -1,6 +1,6 @@
 ---
-name: api-auth
-description: Authenticate to the Remote.com REST API and obtain access tokens for an integration. Use when setting up API access, choosing between customer (API token) and partner (OAuth) auth, implementing the four partner flows (client_credentials, authorization_code, refresh_token, JWT bearer assertion), getting company consent, picking the environment/base host, handling token lifecycle/refresh, or resolving 401/403 errors. Do NOT use for the in-editor Remote MCP session (browser OAuth, handled by the host plugin), endpoint discovery (api-integration), form bodies (api-forms), onboarding (api-onboarding), or webhooks (api-webhooks).
+name: remote-api-auth
+description: Authenticate to the Remote.com REST API and obtain access tokens for an integration. Use when setting up API access, choosing between customer (API token) and partner (OAuth) auth, implementing the four partner flows (client_credentials, authorization_code, refresh_token, JWT bearer assertion), getting company consent, picking the environment/base host, handling token lifecycle/refresh, or resolving 401/403 errors. Do NOT use for the in-editor Remote MCP session (browser OAuth, handled by the host plugin), endpoint discovery (remote-api-integration), form bodies (remote-api-forms), onboarding (remote-api-onboarding), or webhooks (remote-api-webhooks).
 license: MIT
 ---
 

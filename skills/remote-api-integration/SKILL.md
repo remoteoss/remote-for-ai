@@ -1,6 +1,6 @@
 ---
-name: api-integration
-description: Build integrations that call the Remote.com REST API (developer.remote.com) - global HR/payroll/EOR. Use when finding the right endpoint or scope, reading an endpoint's contract, calling REST endpoints, encoding money/dates, paging, or handling errors and rate limits - the entry point and router for any Remote REST integration task. Do NOT use to operate your own workspace (use the Remote MCP operator skills), to obtain tokens (api-auth), to build a dynamic-form body (api-forms), to run the hire sequence (api-onboarding), or for webhooks (api-webhooks).
+name: remote-api-integration
+description: Build integrations that call the Remote.com REST API (developer.remote.com) - global HR/payroll/EOR. Use when finding the right endpoint or scope, reading an endpoint's contract, calling REST endpoints, encoding money/dates, paging, or handling errors and rate limits - the entry point and router for any Remote REST integration task. Do NOT use to operate your own workspace (use the Remote MCP operator skills), to obtain tokens (remote-api-auth), to build a dynamic-form body (remote-api-forms), to run the hire sequence (remote-api-onboarding), or for webhooks (remote-api-webhooks).
 license: MIT
 ---
 
@@ -19,7 +19,7 @@ Entry point and router for building code that calls the Remote.com REST API. Cov
 
 ## Prerequisites
 
-Every call to the Remote REST API requires a bearer token. Obtain one before writing any request code. See the `api-auth` skill for the full token acquisition flow (OAuth 2.0 client credentials for partners, API key for direct integrations).
+Every call to the Remote REST API requires a bearer token. Obtain one before writing any request code. See the `remote-api-auth` skill for the full token acquisition flow (OAuth 2.0 client credentials for partners, API key for direct integrations).
 
 Once you have a token:
 
@@ -33,7 +33,7 @@ There are three hosts. Tokens are environment-bound: a token works only on the g
 - **Customer sandbox:** `https://gateway.remote-sandbox.com` — `ra_test_` customer API tokens issued in this environment.
 - **Partner sandbox:** `https://gateway.partners.remote-sandbox.com` — partner OAuth tokens minted on this host.
 
-Full environments and auth detail live in `api-auth`.
+Full environments and auth detail live in `remote-api-auth`.
 
 ## Security & PII Constraints
 
@@ -73,20 +73,20 @@ End with a "Recommended path" note naming the skill(s) and/or sources to load ne
 Check the proposed auth approach and endpoint list against the OpenAPI contract. Flag any mismatches (wrong scope, non-existent path, incorrect field type). Confirm paging assumptions and error handling. End with a "Recommended path" note.
 
 **BUILD** - the ask is specific (e.g. "call the list employments endpoint"):
-1. Confirm auth is in place via `api-auth`. If not, load that skill first.
+1. Confirm auth is in place via `remote-api-auth`. If not, load that skill first.
 2. Route to a sibling skill if the operation fits one:
-   - Building a dynamic-form request body (Employment or Contractor creation/update) -> `api-forms`
-   - Running the full hire sequence -> `api-onboarding`
-   - Subscribing to or processing webhook events -> `api-webhooks`
+   - Building a dynamic-form request body (Employment or Contractor creation/update) -> `remote-api-forms`
+   - Running the full hire sequence -> `remote-api-onboarding`
+   - Subscribing to or processing webhook events -> `remote-api-webhooks`
 3. Otherwise, proceed here: run the discovery protocol for the target endpoint, then build the call.
 
 **Recommended path block** - always end a BUILD or VALIDATION response with a short block, e.g.:
 
 ```
 Recommended path:
-1. Load api-auth to obtain a sandbox token.
+1. Load remote-api-auth to obtain a sandbox token.
 2. Fetch the endpoint's reference page (https://developer.remote.com/reference/<operationId>.md, with the operationId found via llms.txt) for the full contract.
-3. Proceed here (api-integration) to build the request.
+3. Proceed here (remote-api-integration) to build the request.
 ```
 
 ### Example: Read Request
@@ -133,16 +133,16 @@ Do not use `GET /v1/companies` as a generic smoke test. That endpoint lists comp
 
 | Status | Meaning | What to do |
 |---|---|---|
-| 401 | Missing/invalid token, or token/environment mismatch | See `api-auth`; verify the token was issued for the host you are calling (`ra_live_` = production, `ra_test_` = a test environment; partner OAuth tokens work only on the gateway that minted them) |
+| 401 | Missing/invalid token, or token/environment mismatch | See `remote-api-auth`; verify the token was issued for the host you are calling (`ra_live_` = production, `ra_test_` = a test environment; partner OAuth tokens work only on the gateway that minted them) |
 | 403 | Insufficient scope | Read the endpoint's Scopes table in its `.md` reference; re-mint the token with the required scope |
-| 422 | Schema validation failed | See `api-forms` (omit forbidden fields, no extra keys, money scaled ×100 incl. zero-decimal currencies) |
+| 422 | Schema validation failed | See `remote-api-forms` (omit forbidden fields, no extra keys, money scaled ×100 incl. zero-decimal currencies) |
 | 429 | Rate limited | Back off: `x-ratelimit-reset` is the number of milliseconds until the rate limit resets (a duration, not a timestamp) — wait `x-ratelimit-reset` ms (or `x-ratelimit-reset / 1000` seconds) before retrying; there is no `Retry-After` header |
 
 ### Data Formats
 
 Cross-cutting encoding rules that apply across all endpoints:
 
-- **Money:** amounts are integers scaled **×100** from the major currency unit (cents for USD, pence for GBP) — and Remote applies the ×100 even to conventionally zero-decimal currencies like JPY (¥8,000,000 → `800000000`, not `8000000`). Do not apply the "JPY/KRW aren't multiplied" rule from other payment APIs. The `api-forms` skill covers the `x-jsf-presentation.currency` annotation and the full encoding rules for employment/contractor form fields.
+- **Money:** amounts are integers scaled **×100** from the major currency unit (cents for USD, pence for GBP) — and Remote applies the ×100 even to conventionally zero-decimal currencies like JPY (¥8,000,000 → `800000000`, not `8000000`). Do not apply the "JPY/KRW aren't multiplied" rule from other payment APIs. The `remote-api-forms` skill covers the `x-jsf-presentation.currency` annotation and the full encoding rules for employment/contractor form fields.
 - **Timestamps:** use ISO 8601 with a literal `T` separator and `Z` suffix (UTC). Example: `2026-03-15T09:00:00Z`. Avoid numeric timezone offsets.
 - **Date-only fields:** use `YYYY-MM-DD`. Example: `2026-03-15`.
 - **File downloads:** the API returns files as a base64-encoded data URI in a `content` field. Maximum size is approximately 20 MB. File upload encoding varies by endpoint; confirm from the endpoint's OpenAPI fragment and the `working-with-files.md` guide.
@@ -176,4 +176,4 @@ This is a non-authoritative compass to help orient discovery. The live `llms.txt
 
 **Expecting a `Retry-After` header on 429 responses.** There is no `Retry-After` header. Use the `x-ratelimit-reset` value, which is the number of milliseconds until the rate limit resets (a duration, not a timestamp) — e.g. wait `x-ratelimit-reset` ms (or `x-ratelimit-reset / 1000` seconds) before retrying.
 
-**Proceeding without auth.** Attempting discovery or exploratory calls without a valid token makes all errors look like auth failures. Obtain a sandbox token via `api-auth` before any exploration.
+**Proceeding without auth.** Attempting discovery or exploratory calls without a valid token makes all errors look like auth failures. Obtain a sandbox token via `remote-api-auth` before any exploration.
